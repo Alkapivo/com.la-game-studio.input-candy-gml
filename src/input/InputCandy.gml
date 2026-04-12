@@ -1273,10 +1273,10 @@ function New_InputCandy() {
       axis.value = __IC.AxisToLength( axis.H, axis.V );
       axis.rValue = __IC.AxisToLength( axis.rH, axis.rV );
       var isSignal = axis.value > 0.3
-      axis.right = isSignal && (axis.angle >= 360-45 || axis.angle <= 45)
-			axis.up = isSignal && (axis.angle >= 45 && axis.angle <= 45 + 90)
-			axis.left = isSignal && (axis.angle >= 45 + 90 && axis.angle <= 45 + 180)
-			axis.down = isSignal && (axis.angle >= 45 + 180 && axis.angle <= 45 + 270)
+      axis.up = isSignal && (axis.angle >= 10 && axis.angle <= 170)
+      axis.down = isSignal && (axis.angle >= 190 && axis.angle <= 350)
+      axis.left = isSignal && (axis.angle >= 100 && axis.angle <= 260)
+      axis.right = isSignal && (axis.angle >= 280 || axis.angle <= 80)
 			return axis;
 		},
 		GetStickSignal: function ( player_number, axis_number_X, axis_number_Y ) {
