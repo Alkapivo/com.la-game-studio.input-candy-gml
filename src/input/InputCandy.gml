@@ -490,6 +490,27 @@ function ICDeviceTypeString(i) {
 */
 
 
+///@enum
+function _InputCandyButtons(): Enum() constructor {
+  BTN_A = IC_A
+  BTN_B = IC_B
+  BTN_X = IC_X
+  BTN_Y = IC_Y
+  BTN_PAD_U = IC_padu
+  BTN_PAD_D = IC_padd
+  BTN_PAD_L = IC_padl
+  BTN_PAD_R = IC_padr
+  BTN_L_TRIGGER = IC_Ltrigger
+  BTN_R_TRIGGER = IC_Rtrigger
+  BTN_L_SHOULDER = IC_Lshoulder
+  BTN_R_SHOULDER = IC_Rshoulder
+  BTN_L_STICK = IC_Lstick
+  BTN_R_STICK = IC_Rstick
+}
+global.__InputCandyButtons = new _InputCandyButtons()
+#macro InputCandyButtons global.__InputCandyButtons
+
+
 #macro __FIRST_GAMEPAD_SIGNAL 6
 #macro __LAST_GAMEPAD_SIGNAL_PLUS_1 24
 #macro __FIRST_MOUSE_SIGNAL 24
@@ -508,341 +529,341 @@ function ICDeviceTypeString(i) {
 #macro ICButton_held 1
 #macro ICButton_pressed 2
 
-// Called "once" to initialize everything.
 
-function __Private_Init_InputCandy( bootstrap ) {
-	
+
 global.SDLDB_Entries=0;
 global.SDLDB=[];
-
 global._INPUTCANDY_DEFAULTS_ = {
- //// Global Settings ////
- ready: false,                            // Has IC been initialized?
- steps: unknown,                          // During initialization, steps is set to 0.  This number increases until we reach a certain threshold, and it is used to delay aspects of "setup detection" until device polling is complete (it is not a frame counter)
- max_players: 8,                          // Default value for SetMaxPlayers()
- player_using_keyboard_mouse: 0,          // Player index of the player using the keyboard and mouse
- allow_multibutton_capture: true,         // Allows players to assign multi-button combos to a single action, set to false for simplicity
- allow_keyboard_mouse: true,              // If the platform supports it, setting this true will use keyboard_and_mouse as an input device (false = hide on consoles w/o keyboard)
- allow_SDL_remapping: false,
- keyboard_layout: ICKeyboardLayout_qwerty,   // Changing to Azerty or Qwertz provides a sorta-remapping for keyboards, but there isn't a good way to detect what keyboard
- skip_simplified_axis: false,             // Set this value to true to stop IC from registering simplified axis movements.
- use_network: false,                      // Turn this on if you are going to be using network transmits
- settings_filename: "inputcandy.settings.json",      // Where player-defined settings are saved.
- setup_filename:  "inputcandy.controller.setup.json",         // This file is saved and attempts to remember which settings go with which player and which device, and which SDL remappings are desired
- //// External and Internal interface objects
- interface: New_InputCandy(),             // Public - the programmer interface used in your game.  All you need to know.
- internal: New_InputCandy_Private(),      // Functions used internally, generally not to be called, use interface instead, "private"
- //// Device, player, etc., states
- actions: [],                             // A list of Designer-defined actions ("verbs"), set by the interface
- devices: [],                             // A list of detected devices and their capabilities and remappings
- states: [],                              // A list of device states detected each frame that correspond in index to their associated device
- keys: [],                                // Keyboard key states
- mouseStates: [],                         // Mouse button states
- mouse: { x: none, y: none, left: false, middle: false, right: false, up: false, down: false },
- wasMouse: { x: none, y: none, left: false, middle: false, right: false, up: false, down: false },
- previous_devices: [],                    // A list of previous devices known about particular slots but not currently connected.  Init() establishes this as a stack. TODO
- signals: [],                             // Master collection of signals from all device types supported.
- players: [],                             // A list of player "slots", active setting info, and their status and device association, device state
- settings: [],                            // List of "stored" and associatable settings
- setup: none,				              // Holds on to previous sessions where players have been associated with devices
- network: {},
- platform: {},                            // Platform information acquired from GML
- //// Events that can be overridden: ////
- // Set this to a different function to trigger your own custom reaction to this event.
- e_controller_connected:    function( device_index, deviceInfo ) { show_debug_message("Controller connected! Device ID "+int(device_index)+" "+json_stringify(deviceInfo)); },
- // Set this to a different function to trigger your own custom reaction to this event.
- e_controller_disconnected: function( old_device_index, deviceInfo ) { show_debug_message("Controller disconnected! Device ID was "+int(old_device_index)+" "+json_stringify(deviceInfo)); },
- // Default action for saving the settings file (sandboxed on most systems, only change if you need to)
- e_save_file:      function( filename, json_data ) { string_as_file( filename, json_stringify(json_data) ); },
- e_load_file:      function( filename, default_json ) { if ( !file_exists(filename) ) return default_json; else return json_parse(file_as_string( filename )); },
- // I've removed this since it's best if you tie it into your game the way you want to.  You can simply detect signals and filter them from players who are inactive yourself.
- // What to do when a player wants to join.  This is useful if you wish for players to become active at any time, but can be handled another way
- // e_inactive_player_pressed_start:     function( player_number ) {} //show_debug_message("Player wants to start! "+string_format(player_number,1,0)); }
+  //// Global Settings ////
+  ready: false,                            // Has IC been initialized?
+  steps: unknown,                          // During initialization, steps is set to 0.  This number increases until we reach a certain threshold, and it is used to delay aspects of "setup detection" until device polling is complete (it is not a frame counter)
+  max_players: 8,                          // Default value for SetMaxPlayers()
+  player_using_keyboard_mouse: 0,          // Player index of the player using the keyboard and mouse
+  allow_multibutton_capture: true,         // Allows players to assign multi-button combos to a single action, set to false for simplicity
+  allow_keyboard_mouse: true,              // If the platform supports it, setting this true will use keyboard_and_mouse as an input device (false = hide on consoles w/o keyboard)
+  allow_SDL_remapping: false,
+  keyboard_layout: ICKeyboardLayout_qwerty,   // Changing to Azerty or Qwertz provides a sorta-remapping for keyboards, but there isn't a good way to detect what keyboard
+  skip_simplified_axis: false,             // Set this value to true to stop IC from registering simplified axis movements.
+  use_network: false,                      // Turn this on if you are going to be using network transmits
+  settings_filename: "inputcandy.settings.json",      // Where player-defined settings are saved.
+  setup_filename:  "inputcandy.controller.setup.json",         // This file is saved and attempts to remember which settings go with which player and which device, and which SDL remappings are desired
+  //// External and Internal interface objects
+  interface: New_InputCandy(),             // Public - the programmer interface used in your game.  All you need to know.
+  internal: New_InputCandy_Private(),      // Functions used internally, generally not to be called, use interface instead, "private"
+  //// Device, player, etc., states
+  actions: [],                             // A list of Designer-defined actions ("verbs"), set by the interface
+  devices: [],                             // A list of detected devices and their capabilities and remappings
+  states: [],                              // A list of device states detected each frame that correspond in index to their associated device
+  keys: [],                                // Keyboard key states
+  mouseStates: [],                         // Mouse button states
+  mouse: { x: none, y: none, left: false, middle: false, right: false, up: false, down: false },
+  wasMouse: { x: none, y: none, left: false, middle: false, right: false, up: false, down: false },
+  previous_devices: [],                    // A list of previous devices known about particular slots but not currently connected.  Init() establishes this as a stack. TODO
+  signals: [],                             // Master collection of signals from all device types supported.
+  players: [],                             // A list of player "slots", active setting info, and their status and device association, device state
+  settings: [],                            // List of "stored" and associatable settings
+  setup: none,				              // Holds on to previous sessions where players have been associated with devices
+  network: {},
+  platform: {},                            // Platform information acquired from GML
+  //// Events that can be overridden: ////
+  // Set this to a different function to trigger your own custom reaction to this event.
+  e_controller_connected:    function( device_index, deviceInfo ) { show_debug_message("Controller connected! Device ID "+int(device_index)+" "+json_stringify(deviceInfo)); },
+  // Set this to a different function to trigger your own custom reaction to this event.
+  e_controller_disconnected: function( old_device_index, deviceInfo ) { show_debug_message("Controller disconnected! Device ID was "+int(old_device_index)+" "+json_stringify(deviceInfo)); },
+  // Default action for saving the settings file (sandboxed on most systems, only change if you need to)
+  e_save_file:      function( filename, json_data ) { string_as_file( filename, json_stringify(json_data) ); },
+  e_load_file:      function( filename, default_json ) { if ( !file_exists(filename) ) return default_json; else return json_parse(file_as_string( filename )); },
+  // I've removed this since it's best if you tie it into your game the way you want to.  You can simply detect signals and filter them from players who are inactive yourself.
+  // What to do when a player wants to join.  This is useful if you wish for players to become active at any time, but can be handled another way
+  // e_inactive_player_pressed_start:     function( player_number ) {} //show_debug_message("Player wants to start! "+string_format(player_number,1,0)); }
 };
 
-// This is the global variable where the persistent state of InputCandy is stored.   __IC.interface references this global profile.
-__INPUTCANDY = global._INPUTCANDY_DEFAULTS_;
+// Called "once" to initialize everything.
+function __Private_Init_InputCandy(bootstrap) {
 
-__INPUTCANDY.platform = __ICI.GetPlatformSpecifics();
+  // This is the global variable where the persistent state of InputCandy is stored.   __IC.interface references this global profile.
+  __INPUTCANDY = global._INPUTCANDY_DEFAULTS_;
 
-__INPUTCANDY.signals = [
- {	index:0,    code: IC_none,		     name: "None",  deviceType: ICDeviceType_any },
- {	index:1,    code: IC_anykey,	     name: "Any",   deviceType: ICDeviceType_any },
- {	index:2,    code: IC_left=0,	     name: "Left",  deviceType: ICDeviceType_any },
- {	index:3,    code: IC_right,		     name: "Right", deviceType: ICDeviceType_any },
- {	index:4,    code: IC_up,		     name: "Up",    deviceType: ICDeviceType_any },
- {	index:5,    code: IC_down,		     name: "Down",  deviceType: ICDeviceType_any },
- {	index:6,    code: IC_A,			     name: "A",              deviceType: ICDeviceType_gamepad, deviceCode: gp_face1 }, //__FIRST_GAMEPAD_SIGNAL
- {	index:7,    code: IC_B,			     name: "B",              deviceType: ICDeviceType_gamepad, deviceCode: gp_face2 },
- {	index:8,    code: IC_AandB,		     name: "AandB",          deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:9,    code: IC_X,			     name: "X",              deviceType: ICDeviceType_gamepad, deviceCode: gp_face3 },
- {	index:10,   code: IC_Y,			     name: "Y",              deviceType: ICDeviceType_gamepad, deviceCode: gp_face4 },
- {	index:11,   code: IC_XandY,		     name: "XandY",          deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:12,   code: IC_start,		     name: "Start",          deviceType: ICDeviceType_gamepad, deviceCode: gp_start },
- {	index:13,   code: IC_back_select,    name: "Back/Select",    deviceType: ICDeviceType_gamepad, deviceCode: gp_select },
- {	index:14,   code: IC_Ltrigger,	     name: "Left Trigger",   deviceType: ICDeviceType_gamepad, deviceCode: gp_shoulderlb },
- {	index:15,   code: IC_Rtrigger,	     name: "Right Trigger",  deviceType: ICDeviceType_gamepad, deviceCode: gp_shoulderrb },
- {	index:16,   code: IC_Lshoulder,	     name: "Left Shoulder",  deviceType: ICDeviceType_gamepad, deviceCode: gp_shoulderl },
- {	index:17,   code: IC_Rshoulder,	     name: "Right Shoulder", deviceType: ICDeviceType_gamepad, deviceCode: gp_shoulderr },
- {	index:18,   code: IC_Lstick,	     name: "Left Stick",     deviceType: ICDeviceType_gamepad, deviceCode: gp_stickl },
- {	index:19,   code: IC_Rstick,	     name: "Right Stick",    deviceType: ICDeviceType_gamepad, deviceCode: gp_stickr },
- {	index:20,   code: IC_padu,		     name: "Pad Up",         deviceType: ICDeviceType_gamepad, deviceCode: gp_padu },
- {	index:21,   code: IC_padd,		     name: "Pad Down",       deviceType: ICDeviceType_gamepad, deviceCode: gp_padd },
- {	index:22,   code: IC_padl,		     name: "Pad Left",       deviceType: ICDeviceType_gamepad, deviceCode: gp_padl },
- {	index:23,   code: IC_padr,		     name: "Pad Right",      deviceType: ICDeviceType_gamepad, deviceCode: gp_padr },
- {  index:24,   code: IC_mouse_left,     name: "LMB",            deviceType: ICDeviceType_mouse }, //__FIRST_MOUSE_SIGNAL
- {  index:25,   code: IC_mouse_right,	 name: "RMB",            deviceType: ICDeviceType_mouse },
- {  index:26,   code: IC_mouse_middle,	 name: "MMB",            deviceType: ICDeviceType_mouse },
- {  index:27,   code: IC_mouse_scrollup, name: "Scroll Up",      deviceType: ICDeviceType_mouse },
- {  index:28,   code: IC_mouse_scrolldown,  name: "Scroll Down", deviceType: ICDeviceType_mouse },
- {	index:29,   code: IC_key_arrow_L,	 name: "Left Arrow",     azerty_name: "Left Arrow",  qwertz_name:"Left Arrow",  deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_left },
- {	index:30,   code: IC_key_arrow_R,	 name: "Right Arrow",    azerty_name: "Right Arrow", qwertz_name:"Right Arrow", deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_right  },
- {	index:31,   code: IC_key_arrow_U,	 name: "Up Arrow",       azerty_name: "Up Arrow",    qwertz_name:"Up Arrow",    deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_up },
- {	index:32,   code: IC_key_arrow_D,	 name: "Down Arrow",     azerty_name: "Down Arrow",  qwertz_name:"Down Arrow",  deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_down },
- {  index:33,   code: IC_backspace,      name: "BKSP",    azerty_name: "BKSP",    qwertz_name: "BKSP",    deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_backspace },
- {	index:34,   code: IC_any_alt,		 name: "ALT",     azerty_name: "ALT",     qwertz_name: "ALT",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_alt  },
- {	index:35,   code: IC_any_shift,		 name: "SHIFT",   azerty_name: "SHIFT",   qwertz_name: "SHIFT",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_shift },
- {	index:36,   code: IC_any_control,	 name: "CTRL",    azerty_name: "CTRL",    qwertz_name: "CTRL",    deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_control },
- {	index:37,   code: IC_lalt,			 name: "L-Alt",   azerty_name: "L-Alt",   qwertz_name: "L-Alt",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck_direct, keycode: vk_lalt },
- {	index:38,   code: IC_ralt,			 name: "R-Alt",   azerty_name: "R-Alt",   qwertz_name: "AltGr",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck_direct, keycode: vk_ralt },
- {	index:39,   code: IC_lctrl,			 name: "L-CTRL",  azerty_name: "L-CTRL",  qwertz_name: "L-CTRL",  deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck_direct, keycode: vk_lcontrol },
- {	index:40,   code: IC_rctrl,			 name: "R-CTRL",  azerty_name: "R-CTRL",  qwertz_name: "R-CTRL",  deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck_direct, keycode: vk_rcontrol },
- {	index:41,   code: IC_lshift,		 name: "L-SHIFT", azerty_name: "L-SHIFT", qwertz_name: "L-SHIFT", deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck_direct, keycode: vk_lshift },
- {	index:42,   code: IC_rshift,		 name: "R-SHIFT", azerty_name: "R-SHIFT", qwertz_name: "R-SHIFT", deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck_direct, keycode: vk_rshift },
- {	index:43,   code: IC_tab,			 name: "TAB",     azerty_name: "TAB",     qwertz_name: "TAB",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_tab },
- {	index:44,   code: IC_pause,			 name: "Pause",   azerty_name: "Pause",   qwertz_name: "Pause",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_pause },
- {	index:45,   code: IC_print,			 name: "PrnScr",  azerty_name: "PrnScr",  qwertz_name: "PrnScr",  deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_printscreen },
- {	index:46,   code: IC_pgup,			 name: "PGUP",    azerty_name: "PGUP",    qwertz_name: "PGUP",    deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_pageup },
- {	index:47,   code: IC_pgdn,			 name: "PGDN",    azerty_name: "PGDN",    qwertz_name: "PGDN",    deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_pagedown },
- {	index:48,   code: IC_home,			 name: "HOME",    azerty_name: "HOME",    qwertz_name: "HOME",    deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_home },
- {	index:49,   code: IC_end,			 name: "END",     azerty_name: "END",     qwertz_name: "END",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_end },
- {	index:50,   code: IC_insert,		 name: "INS",     azerty_name: "INS",     qwertz_name: "INS",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_insert },
- {	index:51,   code: IC_delete,		 name: "DEL",     azerty_name: "DEL",     qwertz_name: "DEL",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_delete },
- {	index:52,   code: IC_numpad0,		 name: "Num-0",   azerty_name: "Num-0",   qwertz_name: "Num-0",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad0 },
- {	index:53,   code: IC_numpad1,		 name: "Num-1",   azerty_name: "Num-1",   qwertz_name: "Num-1",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad1 },
- {	index:54,   code: IC_numpad2,		 name: "Num-2",   azerty_name: "Num-2",   qwertz_name: "Num-2",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad2 },
- {	index:55,   code: IC_numpad3,		 name: "Num-3",   azerty_name: "Num-3",   qwertz_name: "Num-3",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad3 },
- {	index:56,   code: IC_numpad4,		 name: "Num-4",   azerty_name: "Num-4",   qwertz_name: "Num-4",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad4 },
- {	index:57,   code: IC_numpad5,		 name: "Num-5",   azerty_name: "Num-5",   qwertz_name: "Num-5",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad5 },
- {	index:58,   code: IC_numpad6,		 name: "Num-6",   azerty_name: "Num-6",   qwertz_name: "Num-6",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad6 },
- {	index:59,   code: IC_numpad7,		 name: "Num-7",   azerty_name: "Num-7",   qwertz_name: "Num-7",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad7 },
- {	index:60,   code: IC_numpad8,		 name: "Num-8",   azerty_name: "Num-8",   qwertz_name: "Num-8",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad8 },
- {	index:61,   code: IC_numpad9,		 name: "Num-9",   azerty_name: "Num-9",   qwertz_name: "Num-9",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad9 },
- {	index:62,   code: IC_numpad_multiply,name: "Num *",   azerty_name: "Num *",   qwertz_name: "Num *",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_multiply },
- {	index:63,   code: IC_numpad_divide,  name: "Num /",   azerty_name: "Num /",   qwertz_name: "Num /",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_divide },
- {	index:64,   code: IC_numpad_subtract,name: "Num -",   azerty_name: "Num -",   qwertz_name: "Num -",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_subtract },
- {	index:65,   code: IC_numpad_add,     name: "Num +",   azerty_name: "Num +",   qwertz_name: "Num +",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_add },
- {	index:66,   code: IC_numpad_decimal, name: "Num .",   azerty_name: "Num .",   qwertz_name: "Num .",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_decimal },
- {	index:67,   code: IC_f1,		     name: "F1",      azerty_name: "F1",      qwertz_name: "F1",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f1 },
- {	index:68,   code: IC_f2,		     name: "F2",      azerty_name: "F2",      qwertz_name: "F2",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f2 },
- {	index:69,   code: IC_f3,		     name: "F3",      azerty_name: "F3",      qwertz_name: "F3",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f3 },
- {	index:70,   code: IC_f4,		     name: "F4",      azerty_name: "F4",      qwertz_name: "F4",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f4 },
- {	index:71,   code: IC_f5,		     name: "F5",      azerty_name: "F5",      qwertz_name: "F5",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f5 },
- {	index:72,   code: IC_f6,		     name: "F6",      azerty_name: "F6",      qwertz_name: "F6",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f6 },
- {	index:73,   code: IC_f7,		     name: "F7",      azerty_name: "F7",      qwertz_name: "F7",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f7 },
- {	index:74,   code: IC_f8,		     name: "F8",      azerty_name: "F8",      qwertz_name: "F8",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f8 },
- {	index:75,   code: IC_f9,		     name: "F9",      azerty_name: "F9",      qwertz_name: "F9",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f9 },
- {	index:76,   code: IC_f10,		     name: "F10",     azerty_name: "F10",     qwertz_name: "F10",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f10 },
- {	index:77,   code: IC_f11,		     name: "F11",     azerty_name: "F11",     qwertz_name: "F11",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f11 },
- {	index:78,   code: IC_f12,		     name: "F12",     azerty_name: "F12",     qwertz_name: "F12",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f12 },
- {	index:79,   code: IC_key_A,		     name: "Key A",   azerty_name: "Key Q",   qwertz_name: "Key A",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "A" },
- {	index:80,   code: IC_key_B,		     name: "Key B",   azerty_name: "Key B",   qwertz_name: "Key B",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "B" },
- {	index:81,   code: IC_key_C,		     name: "Key C",   azerty_name: "Key C",   qwertz_name: "Key C",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "C" },
- {	index:82,   code: IC_key_D,		     name: "Key D",   azerty_name: "Key D",   qwertz_name: "Key D",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "D" },
- {	index:83,   code: IC_key_E,		     name: "Key E",   azerty_name: "Key E",   qwertz_name: "Key E",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "E" },
- {	index:84,   code: IC_key_F,		     name: "Key F",   azerty_name: "Key F",   qwertz_name: "Key F",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "F" },
- {	index:85,   code: IC_key_G,		     name: "Key G",   azerty_name: "Key G",   qwertz_name: "Key G",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "G" },
- {	index:86,   code: IC_key_H,		     name: "Key H",   azerty_name: "Key H",   qwertz_name: "Key H",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "H" },
- {	index:87,   code: IC_key_I,		     name: "Key I",   azerty_name: "Key I",   qwertz_name: "Key I",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "I" },
- {	index:88,   code: IC_key_J,		     name: "Key J",   azerty_name: "Key J",   qwertz_name: "Key J",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "J" },
- {	index:89,   code: IC_key_K,		     name: "Key K",   azerty_name: "Key K",   qwertz_name: "Key K",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "K" },
- {	index:90,   code: IC_key_L,		     name: "Key L",   azerty_name: "Key L",   qwertz_name: "Key L",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "L" },
- {	index:91,   code: IC_key_M,		     name: "Key M",   azerty_name: "Key M",   qwertz_name: "Key M",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "M" },
- {	index:92,   code: IC_key_N,		     name: "Key N",   azerty_name: "Key N",   qwertz_name: "Key N",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "N" },
- {	index:93,   code: IC_key_O,		     name: "Key O",   azerty_name: "Key O",   qwertz_name: "Key O",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "O" },
- {	index:94,   code: IC_key_P,		     name: "Key P",   azerty_name: "Key P",   qwertz_name: "Key P",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "P" },
- {	index:95,   code: IC_key_Q,		     name: "Key Q",   azerty_name: "Key A",   qwertz_name: "Key Q",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "Q" },
- {	index:96,   code: IC_key_R,		     name: "Key R",   azerty_name: "Key R",   qwertz_name: "Key R",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "R" },
- {	index:97,   code: IC_key_S,		     name: "Key S",   azerty_name: "Key S",   qwertz_name: "Key S",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "S" },
- {	index:98,   code: IC_key_T,		     name: "Key T",   azerty_name: "Key R",   qwertz_name: "Key T",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "T" },
- {	index:99,   code: IC_key_U,		     name: "Key U",   azerty_name: "Key U",   qwertz_name: "Key Y",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "U" },
- {	index:100,  code: IC_key_V,		     name: "Key V",   azerty_name: "Key V",   qwertz_name: "Key V",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "V" },
- {	index:101,  code: IC_key_W,		     name: "Key W",   azerty_name: "Key Z",   qwertz_name: "Key W",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "W" },
- {	index:102,  code: IC_key_X,		     name: "Key X",   azerty_name: "Key X",   qwertz_name: "Key X",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "X" },
- {	index:103,  code: IC_key_Y,		     name: "Key Y",   azerty_name: "Key Y",   qwertz_name: "Key Z",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "Y" },
- {	index:104,  code: IC_key_Z,		     name: "Key Z",   azerty_name: "Key W",   qwertz_name: "Key Y",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "Z" },
- {	index:105,  code: IC_key_0,		     name: "Key 0",   azerty_name: "Key 0",   qwertz_name: "Key 0",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "0" },
- {	index:106,  code: IC_key_1,		     name: "Key 1",   azerty_name: "Key 1",   qwertz_name: "Key 1",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "1" },
- {	index:107,  code: IC_key_2,		     name: "Key 2",   azerty_name: "Key 2",   qwertz_name: "Key 2",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "2" },
- {	index:108,  code: IC_key_3,		     name: "Key 3",   azerty_name: "Key 3",   qwertz_name: "Key 3",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "3" },
- {	index:109,  code: IC_key_4,		     name: "Key 4",   azerty_name: "Key 4",   qwertz_name: "Key 4",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "4" },
- {	index:110,  code: IC_key_5,		     name: "Key 5",   azerty_name: "Key 5",   qwertz_name: "Key 5",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "5" },
- {	index:111,  code: IC_key_6,		     name: "Key 6",   azerty_name: "Key 6",   qwertz_name: "Key 6",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "6" },
- {	index:112,  code: IC_key_7,		     name: "Key 7",   azerty_name: "Key 7",   qwertz_name: "Key 7",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "7" },
- {	index:113,  code: IC_key_8,		     name: "Key 8",   azerty_name: "Key 8",   qwertz_name: "Key 8",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "8" },
- {	index:114,  code: IC_key_9,		     name: "Key 9",   azerty_name: "Key 9",   qwertz_name: "Key 9",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "9" },
- {	index:115,  code: IC_key_backtick,	 name: "Backtick",      azerty_name: "Backtick",      qwertz_name:"Backtick",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "`" , shifted: "~" },
- {	index:116,  code: IC_key_comma,		 name: "Comma",         azerty_name: "Comma",         qwertz_name:"Comma",         deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "," , shifted: "<" },
- {	index:117,  code: IC_key_period,	 name: "Period",        azerty_name: "Period",        qwertz_name:"Period",        deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "." , shifted: ">" },
- {	index:118,  code: IC_key_slash,		 name: "Slash",         azerty_name: "Slash",         qwertz_name:"Slash",         deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "/" , shifted: "?" },
- {	index:119,  code: IC_key_backslash,  name: "Backslash",     azerty_name: "Backslash",     qwertz_name:"Backslash",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "\\", shifted: "|" },
- {	index:120,  code: IC_key_minus,		 name: "Minus",         azerty_name: "Minus",         qwertz_name:"Minus",         deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "-" , shifted: "_" },
- {	index:121,  code: IC_key_equals,	 name: "Equals",        azerty_name: "Equals",        qwertz_name:"Equals",        deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "=" , shifted: "+" },
- {	index:122,  code: IC_key_lbracket,	 name: "Left Bracket",  azerty_name: "Left Bracket",  qwertz_name:"Left Bracket",  deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "[" , shifted: "{" },
- {	index:123,  code: IC_key_rbracket,	 name: "Right Bracket", azerty_name: "Right Bracket", qwertz_name:"Right Bracket", deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "]" , shifted: "}" },
- {	index:124,  code: IC_key_semi,		 name: "Semicolon",     azerty_name: "Semicolon",     qwertz_name:"Semicolon",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: ";" , shifted: ":" },
- {	index:125,  code: IC_key_apostrophe, name: "Apostrophe",    azerty_name: "Apostrophe",    qwertz_name:"Apostrophe",    deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "'" , shifted: "\"" },
- {	index:126,  code: IC_enter,          name: "Enter",			azerty_name: "Enter",         qwertz_name:"Enter",         deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_enter  },
- {	index:127,  code: IC_space,          name: "Space",			azerty_name: "Space",         qwertz_name:"Space",         deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_space  },
- {	index:128,  code: IC_key_escape,     name: "Escape",		azerty_name: "Escape",        qwertz_name:"Escape",        deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_escape },
- {	index:129,  code: IC_hat0_U,		 name: "Hat0 Up",       deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:130,  code: IC_hat0_D,		 name: "Hat0 Down",     deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:131,  code: IC_hat0_L,		 name: "Hat0 Left",     deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:132,  code: IC_hat0_R,	     name: "Hat0 Right",	deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:133,  code: IC_hat1_U,		 name: "Hat1 Up",       deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:134,  code: IC_hat1_D,		 name: "Hat1 Down",     deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:135,  code: IC_hat1_L,		 name: "Hat1 Left",     deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:136,  code: IC_hat1_R,	     name: "Hat1 Right",	deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:137,  code: IC_hat2_U,		 name: "Hat2 Up",       deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:138,  code: IC_hat2_D,		 name: "Hat2 Down",     deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:139,  code: IC_hat2_L,		 name: "Hat2 Left",     deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:140,  code: IC_hat2_R,	     name: "Hat2 Right",	deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:141,  code: IC_hat3_U,		 name: "Hat3 Up",       deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:142,  code: IC_hat3_D,		 name: "Hat3 Down",     deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:143,  code: IC_hat3_L,		 name: "Hat3 Left",     deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:144,  code: IC_hat3_R,	     name: "Hat3 Right",	deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:145,  code: IC_hat4_U,		 name: "Hat4 Up",       deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:146,  code: IC_hat4_D,		 name: "Hat4 Down",     deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:147,  code: IC_hat4_L,		 name: "Hat4 Left",     deviceType: ICDeviceType_gamepad, deviceCode: none },
- {	index:148,  code: IC_hat4_R,	     name: "Hat4 Right",	deviceType: ICDeviceType_gamepad, deviceCode: none },
-];
+  __INPUTCANDY.platform = __ICI.GetPlatformSpecifics();
 
-__INPUTCANDY.directionals=[
- { index:0,    code: IC_dpad,     name: "D-Pad",      deviceType: ICDeviceType_gamepad },
- { index:1,    code: IC_hat0,     name: "Hat0",       deviceType: ICDeviceType_gamepad },
- { index:2,    code: IC_hat1,     name: "Hat1",       deviceType: ICDeviceType_gamepad },
- { index:3,    code: IC_hat2,     name: "Hat2",       deviceType: ICDeviceType_gamepad },
- { index:4,    code: IC_hat3,     name: "Hat3",       deviceType: ICDeviceType_gamepad },
- { index:5,    code: IC_hat4,     name: "Hat4",       deviceType: ICDeviceType_gamepad },
- { index:6,    code: IC_hat5,     name: "Hat5",       deviceType: ICDeviceType_gamepad },
- { index:7,    code: IC_hat6,     name: "Hat6",       deviceType: ICDeviceType_gamepad },
- { index:8,    code: IC_hat7,     name: "Hat7",       deviceType: ICDeviceType_gamepad },
- { index:9,    code: IC_hat8,     name: "Hat8",       deviceType: ICDeviceType_gamepad },
- { index:10,   code: IC_hat9,     name: "Hat9",       deviceType: ICDeviceType_gamepad },
- { index:11,   code: IC_axis0,    name: "Axis0",      deviceType: ICDeviceType_gamepad },
- { index:12,   code: IC_axis1,    name: "Axis1",      deviceType: ICDeviceType_gamepad },
- { index:13,   code: IC_axis2,    name: "Axis2",      deviceType: ICDeviceType_gamepad },
- { index:14,   code: IC_axis3,    name: "Axis3",      deviceType: ICDeviceType_gamepad },
- { index:15,   code: IC_axis4,    name: "Axis4",      deviceType: ICDeviceType_gamepad },
- { index:16,   code: IC_axis5,    name: "Axis5",      deviceType: ICDeviceType_gamepad },
- { index:17,   code: IC_axis6,    name: "Axis6",      deviceType: ICDeviceType_gamepad },
- { index:18,   code: IC_axis7,    name: "Axis7",      deviceType: ICDeviceType_gamepad },
- { index:19,   code: IC_axis8,    name: "Axis8",      deviceType: ICDeviceType_gamepad },
- { index:20,   code: IC_axis9,    name: "Axis9",      deviceType: ICDeviceType_gamepad },
- { index:21,   code: IC_stick_01, name: "Stick 0+1",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 1 },
- { index:22,   code: IC_stick_02, name: "Stick 0+2",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 2 },
- { index:23,   code: IC_stick_03, name: "Stick 0+3",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 3 },
- { index:24,   code: IC_stick_04, name: "Stick 0+4",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 4 },
- { index:25,   code: IC_stick_05, name: "Stick 0+5",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 5 },
- { index:26,   code: IC_stick_06, name: "Stick 0+6",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 6 },
- { index:27,   code: IC_stick_07, name: "Stick 0+7",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 7 },
- { index:28,   code: IC_stick_08, name: "Stick 0+8",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 8 },
- { index:29,   code: IC_stick_09, name: "Stick 0+9",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 9 },
- { index:30,   code: IC_stick_10, name: "Stick 1+0",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 0 },
- { index:31,   code: IC_stick_12, name: "Stick 1+2",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 2 },
- { index:32,   code: IC_stick_13, name: "Stick 1+3",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 3 },
- { index:33,   code: IC_stick_14, name: "Stick 1+4",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 4 },
- { index:34,   code: IC_stick_15, name: "Stick 1+5",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 5 },
- { index:35,   code: IC_stick_16, name: "Stick 1+6",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 6 },
- { index:36,   code: IC_stick_17, name: "Stick 1+7",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 7 },
- { index:37,   code: IC_stick_18, name: "Stick 1+8",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 8 },
- { index:38,   code: IC_stick_19, name: "Stick 1+9",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 9 },
- { index:39,   code: IC_stick_20, name: "Stick 2+0",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 0 },
- { index:40,   code: IC_stick_21, name: "Stick 2+1",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 1 },
- { index:41,   code: IC_stick_23, name: "Stick 2+3",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 3 },
- { index:42,   code: IC_stick_24, name: "Stick 2+4",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 4 },
- { index:43,   code: IC_stick_25, name: "Stick 2+5",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 5 },
- { index:44,   code: IC_stick_26, name: "Stick 2+6",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 6 },
- { index:45,   code: IC_stick_27, name: "Stick 2+7",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 7 },
- { index:46,   code: IC_stick_28, name: "Stick 2+8",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 8 },
- { index:47,   code: IC_stick_29, name: "Stick 2+9",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 9 },
- { index:48,   code: IC_stick_30, name: "Stick 3+0",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 0 },
- { index:49,   code: IC_stick_31, name: "Stick 3+1",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 1 },
- { index:50,   code: IC_stick_32, name: "Stick 3+2",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 2 },
- { index:51,   code: IC_stick_34, name: "Stick 3+4",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 4 },
- { index:52,   code: IC_stick_35, name: "Stick 3+5",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 5 },
- { index:53,   code: IC_stick_36, name: "Stick 3+6",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 6 },
- { index:54,   code: IC_stick_37, name: "Stick 3+7",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 7 },
- { index:55,   code: IC_stick_38, name: "Stick 3+8",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 8 },
- { index:56,   code: IC_stick_39, name: "Stick 3+9",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 9 },
- { index:57,   code: IC_stick_40, name: "Stick 4+0",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 0 },
- { index:58,   code: IC_stick_41, name: "Stick 4+1",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 1 },
- { index:59,   code: IC_stick_42, name: "Stick 4+2",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 2 },
- { index:60,   code: IC_stick_43, name: "Stick 4+3",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 3 },
- { index:61,   code: IC_stick_45, name: "Stick 4+5",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 5 },
- { index:62,   code: IC_stick_46, name: "Stick 4+6",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 6 },
- { index:63,   code: IC_stick_47, name: "Stick 4+7",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 7 },
- { index:64,   code: IC_stick_48, name: "Stick 4+8",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 8 },
- { index:65,   code: IC_stick_49, name: "Stick 4+9",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 9 },
- { index:66,   code: IC_stick_50, name: "Stick 5+0",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 0 },
- { index:67,   code: IC_stick_51, name: "Stick 5+1",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 1 },
- { index:68,   code: IC_stick_52, name: "Stick 5+2",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 2 },
- { index:69,   code: IC_stick_53, name: "Stick 5+3",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 3 },
- { index:70,   code: IC_stick_54, name: "Stick 5+4",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 4 },
- { index:71,   code: IC_stick_56, name: "Stick 5+6",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 6 },
- { index:72,   code: IC_stick_57, name: "Stick 5+7",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 7 },
- { index:73,   code: IC_stick_58, name: "Stick 5+8",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 8 },
- { index:74,   code: IC_stick_59, name: "Stick 5+9",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 9 },
- { index:75,   code: IC_stick_60, name: "Stick 6+0",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 0 },
- { index:76,   code: IC_stick_61, name: "Stick 6+1",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 1 },
- { index:77,   code: IC_stick_62, name: "Stick 6+2",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 2 },
- { index:78,   code: IC_stick_63, name: "Stick 6+3",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 3 },
- { index:79,   code: IC_stick_64, name: "Stick 6+4",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 4 },
- { index:80,   code: IC_stick_65, name: "Stick 6+5",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 5 },
- { index:81,   code: IC_stick_67, name: "Stick 6+7",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 7 },
- { index:82,   code: IC_stick_68, name: "Stick 6+8",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 8 },
- { index:83,   code: IC_stick_69, name: "Stick 6+9",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 9 },
- { index:84,   code: IC_stick_70, name: "Stick 7+0",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 0 },
- { index:85,   code: IC_stick_71, name: "Stick 7+1",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 1 },
- { index:86,   code: IC_stick_72, name: "Stick 7+2",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 2 },
- { index:87,   code: IC_stick_73, name: "Stick 7+3",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 3 },
- { index:88,   code: IC_stick_74, name: "Stick 7+4",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 4 },
- { index:89,   code: IC_stick_75, name: "Stick 7+5",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 5 },
- { index:90,   code: IC_stick_76, name: "Stick 7+6",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 6 },
- { index:91,   code: IC_stick_78, name: "Stick 7+8",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 8 },
- { index:92,   code: IC_stick_79, name: "Stick 7+9",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 9 },
- { index:93,   code: IC_stick_80, name: "Stick 8+0",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 0 },
- { index:94,   code: IC_stick_81, name: "Stick 8+1",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 1 },
- { index:95,   code: IC_stick_82, name: "Stick 8+2",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 2 },
- { index:96,   code: IC_stick_83, name: "Stick 8+3",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 3 },
- { index:97,   code: IC_stick_84, name: "Stick 8+4",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 4 },
- { index:98,   code: IC_stick_85, name: "Stick 8+5",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 5 },
- { index:99,   code: IC_stick_86, name: "Stick 8+6",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 6 },
- { index:100,  code: IC_stick_87, name: "Stick 8+7",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 7 },
- { index:101,  code: IC_stick_89, name: "Stick 8+9",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 9 },
- { index:102,  code: IC_stick_90, name: "Stick 9+0",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 0 },
- { index:103,  code: IC_stick_91, name: "Stick 9+1",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 1 },
- { index:104,  code: IC_stick_92, name: "Stick 9+2",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 2 },
- { index:105,  code: IC_stick_93, name: "Stick 9+3",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 3 },
- { index:106,  code: IC_stick_94, name: "Stick 9+4",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 4 },
- { index:107,  code: IC_stick_95, name: "Stick 9+5",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 5 },
- { index:108,  code: IC_stick_96, name: "Stick 9+6",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 6 },
- { index:109,  code: IC_stick_97, name: "Stick 9+7",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 7 },
- { index:110,  code: IC_stick_98, name: "Stick 9+8",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 8 },
- { index:111,  code: IC_arrows,   name: "Arrow Keys", deviceType: ICDeviceType_keyboard, azerty_name: "Arrow Keys",  qwertz_name: "Arrow Keys"  },
- { index:112,  code: IC_wasd,     name: "WASD Keys",  deviceType: ICDeviceType_keyboard, azerty_name: "ZQSD Keys",   qwertz_name: "WASD Keys"   },
- { index:113,  code: IC_numpad,   name: "Numpad 2468",deviceType: ICDeviceType_keyboard, azerty_name: "Numpad 2468", qwertz_name: "Numpad 2468" }
-];
+  __INPUTCANDY.signals = [
+  {	index:0,    code: IC_none,		     name: "None",  deviceType: ICDeviceType_any },
+  {	index:1,    code: IC_anykey,	     name: "Any",   deviceType: ICDeviceType_any },
+  {	index:2,    code: IC_left=0,	     name: "Left",  deviceType: ICDeviceType_any },
+  {	index:3,    code: IC_right,		     name: "Right", deviceType: ICDeviceType_any },
+  {	index:4,    code: IC_up,		     name: "Up",    deviceType: ICDeviceType_any },
+  {	index:5,    code: IC_down,		     name: "Down",  deviceType: ICDeviceType_any },
+  {	index:6,    code: IC_A,			     name: "A",              deviceType: ICDeviceType_gamepad, deviceCode: gp_face1 }, //__FIRST_GAMEPAD_SIGNAL
+  {	index:7,    code: IC_B,			     name: "B",              deviceType: ICDeviceType_gamepad, deviceCode: gp_face2 },
+  {	index:8,    code: IC_AandB,		     name: "AandB",          deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:9,    code: IC_X,			     name: "X",              deviceType: ICDeviceType_gamepad, deviceCode: gp_face3 },
+  {	index:10,   code: IC_Y,			     name: "Y",              deviceType: ICDeviceType_gamepad, deviceCode: gp_face4 },
+  {	index:11,   code: IC_XandY,		     name: "XandY",          deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:12,   code: IC_start,		     name: "Start",          deviceType: ICDeviceType_gamepad, deviceCode: gp_start },
+  {	index:13,   code: IC_back_select,    name: "Back/Select",    deviceType: ICDeviceType_gamepad, deviceCode: gp_select },
+  {	index:14,   code: IC_Ltrigger,	     name: "Left Trigger",   deviceType: ICDeviceType_gamepad, deviceCode: gp_shoulderlb },
+  {	index:15,   code: IC_Rtrigger,	     name: "Right Trigger",  deviceType: ICDeviceType_gamepad, deviceCode: gp_shoulderrb },
+  {	index:16,   code: IC_Lshoulder,	     name: "Left Shoulder",  deviceType: ICDeviceType_gamepad, deviceCode: gp_shoulderl },
+  {	index:17,   code: IC_Rshoulder,	     name: "Right Shoulder", deviceType: ICDeviceType_gamepad, deviceCode: gp_shoulderr },
+  {	index:18,   code: IC_Lstick,	     name: "Left Stick",     deviceType: ICDeviceType_gamepad, deviceCode: gp_stickl },
+  {	index:19,   code: IC_Rstick,	     name: "Right Stick",    deviceType: ICDeviceType_gamepad, deviceCode: gp_stickr },
+  {	index:20,   code: IC_padu,		     name: "Pad Up",         deviceType: ICDeviceType_gamepad, deviceCode: gp_padu },
+  {	index:21,   code: IC_padd,		     name: "Pad Down",       deviceType: ICDeviceType_gamepad, deviceCode: gp_padd },
+  {	index:22,   code: IC_padl,		     name: "Pad Left",       deviceType: ICDeviceType_gamepad, deviceCode: gp_padl },
+  {	index:23,   code: IC_padr,		     name: "Pad Right",      deviceType: ICDeviceType_gamepad, deviceCode: gp_padr },
+  {  index:24,   code: IC_mouse_left,     name: "LMB",            deviceType: ICDeviceType_mouse }, //__FIRST_MOUSE_SIGNAL
+  {  index:25,   code: IC_mouse_right,	 name: "RMB",            deviceType: ICDeviceType_mouse },
+  {  index:26,   code: IC_mouse_middle,	 name: "MMB",            deviceType: ICDeviceType_mouse },
+  {  index:27,   code: IC_mouse_scrollup, name: "Scroll Up",      deviceType: ICDeviceType_mouse },
+  {  index:28,   code: IC_mouse_scrolldown,  name: "Scroll Down", deviceType: ICDeviceType_mouse },
+  {	index:29,   code: IC_key_arrow_L,	 name: "Left Arrow",     azerty_name: "Left Arrow",  qwertz_name:"Left Arrow",  deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_left },
+  {	index:30,   code: IC_key_arrow_R,	 name: "Right Arrow",    azerty_name: "Right Arrow", qwertz_name:"Right Arrow", deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_right  },
+  {	index:31,   code: IC_key_arrow_U,	 name: "Up Arrow",       azerty_name: "Up Arrow",    qwertz_name:"Up Arrow",    deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_up },
+  {	index:32,   code: IC_key_arrow_D,	 name: "Down Arrow",     azerty_name: "Down Arrow",  qwertz_name:"Down Arrow",  deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_down },
+  {  index:33,   code: IC_backspace,      name: "BKSP",    azerty_name: "BKSP",    qwertz_name: "BKSP",    deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_backspace },
+  {	index:34,   code: IC_any_alt,		 name: "ALT",     azerty_name: "ALT",     qwertz_name: "ALT",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_alt  },
+  {	index:35,   code: IC_any_shift,		 name: "SHIFT",   azerty_name: "SHIFT",   qwertz_name: "SHIFT",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_shift },
+  {	index:36,   code: IC_any_control,	 name: "CTRL",    azerty_name: "CTRL",    qwertz_name: "CTRL",    deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_control },
+  {	index:37,   code: IC_lalt,			 name: "L-Alt",   azerty_name: "L-Alt",   qwertz_name: "L-Alt",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck_direct, keycode: vk_lalt },
+  {	index:38,   code: IC_ralt,			 name: "R-Alt",   azerty_name: "R-Alt",   qwertz_name: "AltGr",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck_direct, keycode: vk_ralt },
+  {	index:39,   code: IC_lctrl,			 name: "L-CTRL",  azerty_name: "L-CTRL",  qwertz_name: "L-CTRL",  deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck_direct, keycode: vk_lcontrol },
+  {	index:40,   code: IC_rctrl,			 name: "R-CTRL",  azerty_name: "R-CTRL",  qwertz_name: "R-CTRL",  deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck_direct, keycode: vk_rcontrol },
+  {	index:41,   code: IC_lshift,		 name: "L-SHIFT", azerty_name: "L-SHIFT", qwertz_name: "L-SHIFT", deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck_direct, keycode: vk_lshift },
+  {	index:42,   code: IC_rshift,		 name: "R-SHIFT", azerty_name: "R-SHIFT", qwertz_name: "R-SHIFT", deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck_direct, keycode: vk_rshift },
+  {	index:43,   code: IC_tab,			 name: "TAB",     azerty_name: "TAB",     qwertz_name: "TAB",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_tab },
+  {	index:44,   code: IC_pause,			 name: "Pause",   azerty_name: "Pause",   qwertz_name: "Pause",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_pause },
+  {	index:45,   code: IC_print,			 name: "PrnScr",  azerty_name: "PrnScr",  qwertz_name: "PrnScr",  deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_printscreen },
+  {	index:46,   code: IC_pgup,			 name: "PGUP",    azerty_name: "PGUP",    qwertz_name: "PGUP",    deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_pageup },
+  {	index:47,   code: IC_pgdn,			 name: "PGDN",    azerty_name: "PGDN",    qwertz_name: "PGDN",    deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_pagedown },
+  {	index:48,   code: IC_home,			 name: "HOME",    azerty_name: "HOME",    qwertz_name: "HOME",    deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_home },
+  {	index:49,   code: IC_end,			 name: "END",     azerty_name: "END",     qwertz_name: "END",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_end },
+  {	index:50,   code: IC_insert,		 name: "INS",     azerty_name: "INS",     qwertz_name: "INS",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_insert },
+  {	index:51,   code: IC_delete,		 name: "DEL",     azerty_name: "DEL",     qwertz_name: "DEL",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_delete },
+  {	index:52,   code: IC_numpad0,		 name: "Num-0",   azerty_name: "Num-0",   qwertz_name: "Num-0",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad0 },
+  {	index:53,   code: IC_numpad1,		 name: "Num-1",   azerty_name: "Num-1",   qwertz_name: "Num-1",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad1 },
+  {	index:54,   code: IC_numpad2,		 name: "Num-2",   azerty_name: "Num-2",   qwertz_name: "Num-2",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad2 },
+  {	index:55,   code: IC_numpad3,		 name: "Num-3",   azerty_name: "Num-3",   qwertz_name: "Num-3",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad3 },
+  {	index:56,   code: IC_numpad4,		 name: "Num-4",   azerty_name: "Num-4",   qwertz_name: "Num-4",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad4 },
+  {	index:57,   code: IC_numpad5,		 name: "Num-5",   azerty_name: "Num-5",   qwertz_name: "Num-5",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad5 },
+  {	index:58,   code: IC_numpad6,		 name: "Num-6",   azerty_name: "Num-6",   qwertz_name: "Num-6",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad6 },
+  {	index:59,   code: IC_numpad7,		 name: "Num-7",   azerty_name: "Num-7",   qwertz_name: "Num-7",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad7 },
+  {	index:60,   code: IC_numpad8,		 name: "Num-8",   azerty_name: "Num-8",   qwertz_name: "Num-8",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad8 },
+  {	index:61,   code: IC_numpad9,		 name: "Num-9",   azerty_name: "Num-9",   qwertz_name: "Num-9",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_numpad9 },
+  {	index:62,   code: IC_numpad_multiply,name: "Num *",   azerty_name: "Num *",   qwertz_name: "Num *",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_multiply },
+  {	index:63,   code: IC_numpad_divide,  name: "Num /",   azerty_name: "Num /",   qwertz_name: "Num /",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_divide },
+  {	index:64,   code: IC_numpad_subtract,name: "Num -",   azerty_name: "Num -",   qwertz_name: "Num -",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_subtract },
+  {	index:65,   code: IC_numpad_add,     name: "Num +",   azerty_name: "Num +",   qwertz_name: "Num +",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_add },
+  {	index:66,   code: IC_numpad_decimal, name: "Num .",   azerty_name: "Num .",   qwertz_name: "Num .",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_decimal },
+  {	index:67,   code: IC_f1,		     name: "F1",      azerty_name: "F1",      qwertz_name: "F1",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f1 },
+  {	index:68,   code: IC_f2,		     name: "F2",      azerty_name: "F2",      qwertz_name: "F2",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f2 },
+  {	index:69,   code: IC_f3,		     name: "F3",      azerty_name: "F3",      qwertz_name: "F3",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f3 },
+  {	index:70,   code: IC_f4,		     name: "F4",      azerty_name: "F4",      qwertz_name: "F4",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f4 },
+  {	index:71,   code: IC_f5,		     name: "F5",      azerty_name: "F5",      qwertz_name: "F5",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f5 },
+  {	index:72,   code: IC_f6,		     name: "F6",      azerty_name: "F6",      qwertz_name: "F6",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f6 },
+  {	index:73,   code: IC_f7,		     name: "F7",      azerty_name: "F7",      qwertz_name: "F7",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f7 },
+  {	index:74,   code: IC_f8,		     name: "F8",      azerty_name: "F8",      qwertz_name: "F8",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f8 },
+  {	index:75,   code: IC_f9,		     name: "F9",      azerty_name: "F9",      qwertz_name: "F9",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f9 },
+  {	index:76,   code: IC_f10,		     name: "F10",     azerty_name: "F10",     qwertz_name: "F10",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f10 },
+  {	index:77,   code: IC_f11,		     name: "F11",     azerty_name: "F11",     qwertz_name: "F11",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f11 },
+  {	index:78,   code: IC_f12,		     name: "F12",     azerty_name: "F12",     qwertz_name: "F12",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_f12 },
+  {	index:79,   code: IC_key_A,		     name: "Key A",   azerty_name: "Key Q",   qwertz_name: "Key A",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "A" },
+  {	index:80,   code: IC_key_B,		     name: "Key B",   azerty_name: "Key B",   qwertz_name: "Key B",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "B" },
+  {	index:81,   code: IC_key_C,		     name: "Key C",   azerty_name: "Key C",   qwertz_name: "Key C",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "C" },
+  {	index:82,   code: IC_key_D,		     name: "Key D",   azerty_name: "Key D",   qwertz_name: "Key D",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "D" },
+  {	index:83,   code: IC_key_E,		     name: "Key E",   azerty_name: "Key E",   qwertz_name: "Key E",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "E" },
+  {	index:84,   code: IC_key_F,		     name: "Key F",   azerty_name: "Key F",   qwertz_name: "Key F",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "F" },
+  {	index:85,   code: IC_key_G,		     name: "Key G",   azerty_name: "Key G",   qwertz_name: "Key G",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "G" },
+  {	index:86,   code: IC_key_H,		     name: "Key H",   azerty_name: "Key H",   qwertz_name: "Key H",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "H" },
+  {	index:87,   code: IC_key_I,		     name: "Key I",   azerty_name: "Key I",   qwertz_name: "Key I",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "I" },
+  {	index:88,   code: IC_key_J,		     name: "Key J",   azerty_name: "Key J",   qwertz_name: "Key J",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "J" },
+  {	index:89,   code: IC_key_K,		     name: "Key K",   azerty_name: "Key K",   qwertz_name: "Key K",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "K" },
+  {	index:90,   code: IC_key_L,		     name: "Key L",   azerty_name: "Key L",   qwertz_name: "Key L",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "L" },
+  {	index:91,   code: IC_key_M,		     name: "Key M",   azerty_name: "Key M",   qwertz_name: "Key M",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "M" },
+  {	index:92,   code: IC_key_N,		     name: "Key N",   azerty_name: "Key N",   qwertz_name: "Key N",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "N" },
+  {	index:93,   code: IC_key_O,		     name: "Key O",   azerty_name: "Key O",   qwertz_name: "Key O",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "O" },
+  {	index:94,   code: IC_key_P,		     name: "Key P",   azerty_name: "Key P",   qwertz_name: "Key P",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "P" },
+  {	index:95,   code: IC_key_Q,		     name: "Key Q",   azerty_name: "Key A",   qwertz_name: "Key Q",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "Q" },
+  {	index:96,   code: IC_key_R,		     name: "Key R",   azerty_name: "Key R",   qwertz_name: "Key R",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "R" },
+  {	index:97,   code: IC_key_S,		     name: "Key S",   azerty_name: "Key S",   qwertz_name: "Key S",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "S" },
+  {	index:98,   code: IC_key_T,		     name: "Key T",   azerty_name: "Key R",   qwertz_name: "Key T",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "T" },
+  {	index:99,   code: IC_key_U,		     name: "Key U",   azerty_name: "Key U",   qwertz_name: "Key Y",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "U" },
+  {	index:100,  code: IC_key_V,		     name: "Key V",   azerty_name: "Key V",   qwertz_name: "Key V",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "V" },
+  {	index:101,  code: IC_key_W,		     name: "Key W",   azerty_name: "Key Z",   qwertz_name: "Key W",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "W" },
+  {	index:102,  code: IC_key_X,		     name: "Key X",   azerty_name: "Key X",   qwertz_name: "Key X",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "X" },
+  {	index:103,  code: IC_key_Y,		     name: "Key Y",   azerty_name: "Key Y",   qwertz_name: "Key Z",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "Y" },
+  {	index:104,  code: IC_key_Z,		     name: "Key Z",   azerty_name: "Key W",   qwertz_name: "Key Y",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "Z" },
+  {	index:105,  code: IC_key_0,		     name: "Key 0",   azerty_name: "Key 0",   qwertz_name: "Key 0",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "0" },
+  {	index:106,  code: IC_key_1,		     name: "Key 1",   azerty_name: "Key 1",   qwertz_name: "Key 1",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "1" },
+  {	index:107,  code: IC_key_2,		     name: "Key 2",   azerty_name: "Key 2",   qwertz_name: "Key 2",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "2" },
+  {	index:108,  code: IC_key_3,		     name: "Key 3",   azerty_name: "Key 3",   qwertz_name: "Key 3",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "3" },
+  {	index:109,  code: IC_key_4,		     name: "Key 4",   azerty_name: "Key 4",   qwertz_name: "Key 4",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "4" },
+  {	index:110,  code: IC_key_5,		     name: "Key 5",   azerty_name: "Key 5",   qwertz_name: "Key 5",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "5" },
+  {	index:111,  code: IC_key_6,		     name: "Key 6",   azerty_name: "Key 6",   qwertz_name: "Key 6",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "6" },
+  {	index:112,  code: IC_key_7,		     name: "Key 7",   azerty_name: "Key 7",   qwertz_name: "Key 7",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "7" },
+  {	index:113,  code: IC_key_8,		     name: "Key 8",   azerty_name: "Key 8",   qwertz_name: "Key 8",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "8" },
+  {	index:114,  code: IC_key_9,		     name: "Key 9",   azerty_name: "Key 9",   qwertz_name: "Key 9",   deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_ord, keychar: "9" },
+  {	index:115,  code: IC_key_backtick,	 name: "Backtick",      azerty_name: "Backtick",      qwertz_name:"Backtick",      deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "`" , shifted: "~" },
+  {	index:116,  code: IC_key_comma,		 name: "Comma",         azerty_name: "Comma",         qwertz_name:"Comma",         deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "," , shifted: "<" },
+  {	index:117,  code: IC_key_period,	 name: "Period",        azerty_name: "Period",        qwertz_name:"Period",        deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "." , shifted: ">" },
+  {	index:118,  code: IC_key_slash,		 name: "Slash",         azerty_name: "Slash",         qwertz_name:"Slash",         deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "/" , shifted: "?" },
+  {	index:119,  code: IC_key_backslash,  name: "Backslash",     azerty_name: "Backslash",     qwertz_name:"Backslash",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "\\", shifted: "|" },
+  {	index:120,  code: IC_key_minus,		 name: "Minus",         azerty_name: "Minus",         qwertz_name:"Minus",         deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "-" , shifted: "_" },
+  {	index:121,  code: IC_key_equals,	 name: "Equals",        azerty_name: "Equals",        qwertz_name:"Equals",        deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "=" , shifted: "+" },
+  {	index:122,  code: IC_key_lbracket,	 name: "Left Bracket",  azerty_name: "Left Bracket",  qwertz_name:"Left Bracket",  deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "[" , shifted: "{" },
+  {	index:123,  code: IC_key_rbracket,	 name: "Right Bracket", azerty_name: "Right Bracket", qwertz_name:"Right Bracket", deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "]" , shifted: "}" },
+  {	index:124,  code: IC_key_semi,		 name: "Semicolon",     azerty_name: "Semicolon",     qwertz_name:"Semicolon",     deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: ";" , shifted: ":" },
+  {	index:125,  code: IC_key_apostrophe, name: "Apostrophe",    azerty_name: "Apostrophe",    qwertz_name:"Apostrophe",    deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_lastkey, keychar: "'" , shifted: "\"" },
+  {	index:126,  code: IC_enter,          name: "Enter",			azerty_name: "Enter",         qwertz_name:"Enter",         deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_enter  },
+  {	index:127,  code: IC_space,          name: "Space",			azerty_name: "Space",         qwertz_name:"Space",         deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_space  },
+  {	index:128,  code: IC_key_escape,     name: "Escape",		azerty_name: "Escape",        qwertz_name:"Escape",        deviceType: ICDeviceType_keyboard, keyboardMethod: ICKeyboardMethod_keycheck, keycode: vk_escape },
+  {	index:129,  code: IC_hat0_U,		 name: "Hat0 Up",       deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:130,  code: IC_hat0_D,		 name: "Hat0 Down",     deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:131,  code: IC_hat0_L,		 name: "Hat0 Left",     deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:132,  code: IC_hat0_R,	     name: "Hat0 Right",	deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:133,  code: IC_hat1_U,		 name: "Hat1 Up",       deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:134,  code: IC_hat1_D,		 name: "Hat1 Down",     deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:135,  code: IC_hat1_L,		 name: "Hat1 Left",     deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:136,  code: IC_hat1_R,	     name: "Hat1 Right",	deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:137,  code: IC_hat2_U,		 name: "Hat2 Up",       deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:138,  code: IC_hat2_D,		 name: "Hat2 Down",     deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:139,  code: IC_hat2_L,		 name: "Hat2 Left",     deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:140,  code: IC_hat2_R,	     name: "Hat2 Right",	deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:141,  code: IC_hat3_U,		 name: "Hat3 Up",       deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:142,  code: IC_hat3_D,		 name: "Hat3 Down",     deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:143,  code: IC_hat3_L,		 name: "Hat3 Left",     deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:144,  code: IC_hat3_R,	     name: "Hat3 Right",	deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:145,  code: IC_hat4_U,		 name: "Hat4 Up",       deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:146,  code: IC_hat4_D,		 name: "Hat4 Down",     deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:147,  code: IC_hat4_L,		 name: "Hat4 Left",     deviceType: ICDeviceType_gamepad, deviceCode: none },
+  {	index:148,  code: IC_hat4_R,	     name: "Hat4 Right",	deviceType: ICDeviceType_gamepad, deviceCode: none },
+  ];
 
-__INPUTCANDY.SDL_GameControllerDB = [];
+  __INPUTCANDY.directionals=[
+  { index:0,    code: IC_dpad,     name: "D-Pad",      deviceType: ICDeviceType_gamepad },
+  { index:1,    code: IC_hat0,     name: "Hat0",       deviceType: ICDeviceType_gamepad },
+  { index:2,    code: IC_hat1,     name: "Hat1",       deviceType: ICDeviceType_gamepad },
+  { index:3,    code: IC_hat2,     name: "Hat2",       deviceType: ICDeviceType_gamepad },
+  { index:4,    code: IC_hat3,     name: "Hat3",       deviceType: ICDeviceType_gamepad },
+  { index:5,    code: IC_hat4,     name: "Hat4",       deviceType: ICDeviceType_gamepad },
+  { index:6,    code: IC_hat5,     name: "Hat5",       deviceType: ICDeviceType_gamepad },
+  { index:7,    code: IC_hat6,     name: "Hat6",       deviceType: ICDeviceType_gamepad },
+  { index:8,    code: IC_hat7,     name: "Hat7",       deviceType: ICDeviceType_gamepad },
+  { index:9,    code: IC_hat8,     name: "Hat8",       deviceType: ICDeviceType_gamepad },
+  { index:10,   code: IC_hat9,     name: "Hat9",       deviceType: ICDeviceType_gamepad },
+  { index:11,   code: IC_axis0,    name: "Axis0",      deviceType: ICDeviceType_gamepad },
+  { index:12,   code: IC_axis1,    name: "Axis1",      deviceType: ICDeviceType_gamepad },
+  { index:13,   code: IC_axis2,    name: "Axis2",      deviceType: ICDeviceType_gamepad },
+  { index:14,   code: IC_axis3,    name: "Axis3",      deviceType: ICDeviceType_gamepad },
+  { index:15,   code: IC_axis4,    name: "Axis4",      deviceType: ICDeviceType_gamepad },
+  { index:16,   code: IC_axis5,    name: "Axis5",      deviceType: ICDeviceType_gamepad },
+  { index:17,   code: IC_axis6,    name: "Axis6",      deviceType: ICDeviceType_gamepad },
+  { index:18,   code: IC_axis7,    name: "Axis7",      deviceType: ICDeviceType_gamepad },
+  { index:19,   code: IC_axis8,    name: "Axis8",      deviceType: ICDeviceType_gamepad },
+  { index:20,   code: IC_axis9,    name: "Axis9",      deviceType: ICDeviceType_gamepad },
+  { index:21,   code: IC_stick_01, name: "Stick 0+1",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 1 },
+  { index:22,   code: IC_stick_02, name: "Stick 0+2",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 2 },
+  { index:23,   code: IC_stick_03, name: "Stick 0+3",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 3 },
+  { index:24,   code: IC_stick_04, name: "Stick 0+4",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 4 },
+  { index:25,   code: IC_stick_05, name: "Stick 0+5",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 5 },
+  { index:26,   code: IC_stick_06, name: "Stick 0+6",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 6 },
+  { index:27,   code: IC_stick_07, name: "Stick 0+7",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 7 },
+  { index:28,   code: IC_stick_08, name: "Stick 0+8",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 8 },
+  { index:29,   code: IC_stick_09, name: "Stick 0+9",  deviceType: ICDeviceType_gamepad, stickH: 0, stickV: 9 },
+  { index:30,   code: IC_stick_10, name: "Stick 1+0",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 0 },
+  { index:31,   code: IC_stick_12, name: "Stick 1+2",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 2 },
+  { index:32,   code: IC_stick_13, name: "Stick 1+3",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 3 },
+  { index:33,   code: IC_stick_14, name: "Stick 1+4",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 4 },
+  { index:34,   code: IC_stick_15, name: "Stick 1+5",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 5 },
+  { index:35,   code: IC_stick_16, name: "Stick 1+6",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 6 },
+  { index:36,   code: IC_stick_17, name: "Stick 1+7",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 7 },
+  { index:37,   code: IC_stick_18, name: "Stick 1+8",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 8 },
+  { index:38,   code: IC_stick_19, name: "Stick 1+9",  deviceType: ICDeviceType_gamepad, stickH: 1, stickV: 9 },
+  { index:39,   code: IC_stick_20, name: "Stick 2+0",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 0 },
+  { index:40,   code: IC_stick_21, name: "Stick 2+1",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 1 },
+  { index:41,   code: IC_stick_23, name: "Stick 2+3",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 3 },
+  { index:42,   code: IC_stick_24, name: "Stick 2+4",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 4 },
+  { index:43,   code: IC_stick_25, name: "Stick 2+5",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 5 },
+  { index:44,   code: IC_stick_26, name: "Stick 2+6",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 6 },
+  { index:45,   code: IC_stick_27, name: "Stick 2+7",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 7 },
+  { index:46,   code: IC_stick_28, name: "Stick 2+8",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 8 },
+  { index:47,   code: IC_stick_29, name: "Stick 2+9",  deviceType: ICDeviceType_gamepad, stickH: 2, stickV: 9 },
+  { index:48,   code: IC_stick_30, name: "Stick 3+0",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 0 },
+  { index:49,   code: IC_stick_31, name: "Stick 3+1",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 1 },
+  { index:50,   code: IC_stick_32, name: "Stick 3+2",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 2 },
+  { index:51,   code: IC_stick_34, name: "Stick 3+4",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 4 },
+  { index:52,   code: IC_stick_35, name: "Stick 3+5",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 5 },
+  { index:53,   code: IC_stick_36, name: "Stick 3+6",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 6 },
+  { index:54,   code: IC_stick_37, name: "Stick 3+7",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 7 },
+  { index:55,   code: IC_stick_38, name: "Stick 3+8",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 8 },
+  { index:56,   code: IC_stick_39, name: "Stick 3+9",  deviceType: ICDeviceType_gamepad, stickH: 3, stickV: 9 },
+  { index:57,   code: IC_stick_40, name: "Stick 4+0",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 0 },
+  { index:58,   code: IC_stick_41, name: "Stick 4+1",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 1 },
+  { index:59,   code: IC_stick_42, name: "Stick 4+2",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 2 },
+  { index:60,   code: IC_stick_43, name: "Stick 4+3",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 3 },
+  { index:61,   code: IC_stick_45, name: "Stick 4+5",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 5 },
+  { index:62,   code: IC_stick_46, name: "Stick 4+6",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 6 },
+  { index:63,   code: IC_stick_47, name: "Stick 4+7",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 7 },
+  { index:64,   code: IC_stick_48, name: "Stick 4+8",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 8 },
+  { index:65,   code: IC_stick_49, name: "Stick 4+9",  deviceType: ICDeviceType_gamepad, stickH: 4, stickV: 9 },
+  { index:66,   code: IC_stick_50, name: "Stick 5+0",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 0 },
+  { index:67,   code: IC_stick_51, name: "Stick 5+1",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 1 },
+  { index:68,   code: IC_stick_52, name: "Stick 5+2",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 2 },
+  { index:69,   code: IC_stick_53, name: "Stick 5+3",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 3 },
+  { index:70,   code: IC_stick_54, name: "Stick 5+4",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 4 },
+  { index:71,   code: IC_stick_56, name: "Stick 5+6",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 6 },
+  { index:72,   code: IC_stick_57, name: "Stick 5+7",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 7 },
+  { index:73,   code: IC_stick_58, name: "Stick 5+8",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 8 },
+  { index:74,   code: IC_stick_59, name: "Stick 5+9",  deviceType: ICDeviceType_gamepad, stickH: 5, stickV: 9 },
+  { index:75,   code: IC_stick_60, name: "Stick 6+0",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 0 },
+  { index:76,   code: IC_stick_61, name: "Stick 6+1",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 1 },
+  { index:77,   code: IC_stick_62, name: "Stick 6+2",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 2 },
+  { index:78,   code: IC_stick_63, name: "Stick 6+3",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 3 },
+  { index:79,   code: IC_stick_64, name: "Stick 6+4",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 4 },
+  { index:80,   code: IC_stick_65, name: "Stick 6+5",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 5 },
+  { index:81,   code: IC_stick_67, name: "Stick 6+7",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 7 },
+  { index:82,   code: IC_stick_68, name: "Stick 6+8",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 8 },
+  { index:83,   code: IC_stick_69, name: "Stick 6+9",  deviceType: ICDeviceType_gamepad, stickH: 6, stickV: 9 },
+  { index:84,   code: IC_stick_70, name: "Stick 7+0",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 0 },
+  { index:85,   code: IC_stick_71, name: "Stick 7+1",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 1 },
+  { index:86,   code: IC_stick_72, name: "Stick 7+2",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 2 },
+  { index:87,   code: IC_stick_73, name: "Stick 7+3",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 3 },
+  { index:88,   code: IC_stick_74, name: "Stick 7+4",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 4 },
+  { index:89,   code: IC_stick_75, name: "Stick 7+5",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 5 },
+  { index:90,   code: IC_stick_76, name: "Stick 7+6",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 6 },
+  { index:91,   code: IC_stick_78, name: "Stick 7+8",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 8 },
+  { index:92,   code: IC_stick_79, name: "Stick 7+9",  deviceType: ICDeviceType_gamepad, stickH: 7, stickV: 9 },
+  { index:93,   code: IC_stick_80, name: "Stick 8+0",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 0 },
+  { index:94,   code: IC_stick_81, name: "Stick 8+1",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 1 },
+  { index:95,   code: IC_stick_82, name: "Stick 8+2",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 2 },
+  { index:96,   code: IC_stick_83, name: "Stick 8+3",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 3 },
+  { index:97,   code: IC_stick_84, name: "Stick 8+4",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 4 },
+  { index:98,   code: IC_stick_85, name: "Stick 8+5",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 5 },
+  { index:99,   code: IC_stick_86, name: "Stick 8+6",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 6 },
+  { index:100,  code: IC_stick_87, name: "Stick 8+7",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 7 },
+  { index:101,  code: IC_stick_89, name: "Stick 8+9",  deviceType: ICDeviceType_gamepad, stickH: 8, stickV: 9 },
+  { index:102,  code: IC_stick_90, name: "Stick 9+0",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 0 },
+  { index:103,  code: IC_stick_91, name: "Stick 9+1",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 1 },
+  { index:104,  code: IC_stick_92, name: "Stick 9+2",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 2 },
+  { index:105,  code: IC_stick_93, name: "Stick 9+3",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 3 },
+  { index:106,  code: IC_stick_94, name: "Stick 9+4",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 4 },
+  { index:107,  code: IC_stick_95, name: "Stick 9+5",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 5 },
+  { index:108,  code: IC_stick_96, name: "Stick 9+6",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 6 },
+  { index:109,  code: IC_stick_97, name: "Stick 9+7",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 7 },
+  { index:110,  code: IC_stick_98, name: "Stick 9+8",  deviceType: ICDeviceType_gamepad, stickH: 9, stickV: 8 },
+  { index:111,  code: IC_arrows,   name: "Arrow Keys", deviceType: ICDeviceType_keyboard, azerty_name: "Arrow Keys",  qwertz_name: "Arrow Keys"  },
+  { index:112,  code: IC_wasd,     name: "WASD Keys",  deviceType: ICDeviceType_keyboard, azerty_name: "ZQSD Keys",   qwertz_name: "WASD Keys"   },
+  { index:113,  code: IC_numpad,   name: "Numpad 2468",deviceType: ICDeviceType_keyboard, azerty_name: "Numpad 2468", qwertz_name: "Numpad 2468" }
+  ];
 
-bootstrap.init();
-__ICI.LoadSettings();
+  __INPUTCANDY.SDL_GameControllerDB = [];
 
-__ICI.Init();
-__INPUTCANDY.ready=true;
+  bootstrap.init();
+  __ICI.LoadSettings();
 
-__Init_ICUI();
+  __ICI.Init();
+  __INPUTCANDY.ready=true;
+
+  __Init_ICUI();
 }
 
 
@@ -1252,7 +1273,26 @@ function New_InputCandy() {
 			return hat;
 		},
 		GetAxisSignal: function ( player_number, axis_number ) {
-			var axis={ up: false, down: false, left: false, right: false, value: AXIS_NO_VALUE, angle: AXIS_NO_VALUE, H: AXIS_NO_VALUE, V: AXIS_NO_VALUE, rH: AXIS_NO_VALUE, rV: AXIS_NO_VALUE, rAngle: AXIS_NO_VALUE, rValue: AXIS_NO_VALUE, not_available: false, deadzone: null};
+			var axis = {
+        up: false,
+        down: false,
+        left: false,
+        right: false,
+        value: AXIS_NO_VALUE,
+        angle: AXIS_NO_VALUE,
+        H: AXIS_NO_VALUE,
+        V: AXIS_NO_VALUE,
+        rH: AXIS_NO_VALUE,
+        rV: AXIS_NO_VALUE,
+        rUp: false,
+        rDown: false,
+        rLeft: false,
+        rRight: false,
+        rAngle: AXIS_NO_VALUE,
+        rValue: AXIS_NO_VALUE,
+        not_available: false,
+        deadzone: null
+    };
 			var device=__INPUTCANDY.players[player_number-1].device;
 			if ( device == none or device >= array_length(__INPUTCANDY.devices) ) {
 				axis.not_available=true;
@@ -1268,15 +1308,25 @@ function New_InputCandy() {
 			axis.rH = gamepad_axis_value(__INPUTCANDY.devices[device].slot_id, gp_axisrh);
 			axis.rV = gamepad_axis_value(__INPUTCANDY.devices[device].slot_id, gp_axisrv);
 			axis.deadzone = gamepad_get_axis_deadzone(__INPUTCANDY.devices[device].slot_id);
+
 			axis.angle = __IC.AxisToAngle( axis.H, axis.V );
-      axis.rAngle = __IC.AxisToAngle( axis.rH, axis.rV );
       axis.value = __IC.AxisToLength( axis.H, axis.V );
+      axis.rAngle = __IC.AxisToAngle( axis.rH, axis.rV );
       axis.rValue = __IC.AxisToLength( axis.rH, axis.rV );
+
       var isSignal = axis.value > 0.3
+      var isRSignal = axis.rValue > 0.3
+
       axis.up = isSignal && (axis.angle >= 10 && axis.angle <= 170)
       axis.down = isSignal && (axis.angle >= 190 && axis.angle <= 350)
       axis.left = isSignal && (axis.angle >= 100 && axis.angle <= 260)
       axis.right = isSignal && (axis.angle >= 280 || axis.angle <= 80)
+
+      axis.rUp = isRSignal && (axis.rAngle >= 10 && axis.rAngle <= 170)
+      axis.rDown = isRSignal && (axis.rAngle >= 190 && axis.rAngle <= 350)
+      axis.rLeft = isRSignal && (axis.rAngle >= 100 && axis.rAngle <= 260)
+      axis.rRight = isRSignal && (axis.rAngle >= 280 || axis.rAngle <= 80)
+
 			return axis;
 		},
 		GetStickSignal: function ( player_number, axis_number_X, axis_number_Y ) {
