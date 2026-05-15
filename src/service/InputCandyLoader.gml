@@ -80,6 +80,37 @@ function InputCandyLoader(config = null): Service(config) constructor {
         && array_length(__INPUTCANDY.devices) != 0
   }
 
+  ///@return {Boolean}
+  anykey = function() {
+    var result = false
+    var gamepads = gamepad_get_device_count()
+    for (var index = 0; index < gamepads; index++) {
+      if (gamepad_is_connected(index)) {
+        for (var idx = gp_face1; idx < gp_axisrv; idx++) {
+          result = gamepad_button_check(index, idx)
+          if (result) {
+            break
+          }
+        }
+
+        if (!result) {
+          result = abs(gamepad_axis_value(index, gp_axislh)) > 0.3
+            || abs(gamepad_axis_value(index, gp_axislv)) > 0.3
+          
+          if (result) {
+            break
+          }
+        }
+      }
+
+      if (result) {
+        break
+      }
+    }
+
+    return result
+  }
+
   ///@param {Event} event
   ///@return {?Promise}
   send = function(event) {
