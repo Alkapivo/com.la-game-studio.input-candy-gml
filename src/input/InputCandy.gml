@@ -1197,14 +1197,14 @@ function New_InputCandy() {
 			var hat={ up: false, down: false, left: false, right: false, H: AXIS_NO_VALUE, V: AXIS_NO_VALUE, value: AXIS_NO_VALUE, not_available: false };
 			var device=__INPUTCANDY.players[player_number-1].device;
 			if ( device == none or device >= array_length(__INPUTCANDY.devices) ) {
-        Core.print("device >= array_length(__INPUTCANDY.devices)", device, array_length(__INPUTCANDY.devices))
+        //Core.print("device >= array_length(__INPUTCANDY.devices)", device, array_length(__INPUTCANDY.devices))
 				hat.not_available=true;
 				return hat;
 			}
 			if ( hat_number >= __INPUTCANDY.devices[device].hat_count ) {
         //Core.print("__INPUTCANDY.devices[device].hat_count", device, __INPUTCANDY.devices[device].hat_count)
-				//hat.not_available=true;
-				//return hat;
+				hat.not_available=true;
+				return hat;
 			}
 			if ( hat_number <= 4 ) {
 				switch ( hat_number ) {
