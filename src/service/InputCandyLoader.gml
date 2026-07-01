@@ -1,4 +1,6 @@
 ///@package com.la-game-studio.input-candy.service
+show_debug_message("init InputCandyLoader.gml")
+
 
 ///@type {String}
 #macro BeanInputCandyLoader "InputCandyLoader"

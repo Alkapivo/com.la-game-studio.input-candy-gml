@@ -1,5 +1,7 @@
 ///@package com.la-game-studio.input-candy.util
 ///@description Fork of https://github.com/LAGameStudio/InputCandy/commit/0d1b0c82fdbcc5367384916edba5daa3f8dc3fd8
+show_debug_message("init InputCandyUtils.gml")
+
 
 /* 
    The following functions are required for use by InputCandy.  (Not InputCandySimple)

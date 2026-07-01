@@ -1,5 +1,7 @@
 ///@package com.la-game-studio.input-candy.input
 ///@description Fork of https://github.com/LAGameStudio/InputCandy/commit/0d1b0c82fdbcc5367384916edba5daa3f8dc3fd8
+show_debug_message("init InputCandy.gml")
+
 
 function __Init_ICUI() {
   Logger.debug("InputCandy", "Mock __Init_ICUI")
@@ -977,7 +979,7 @@ function New_InputCandy() {
 		GetAction: function ( name /*, group*/ ) {
 			var len=array_length(__INPUTCANDY.actions);
 			if ( argument_count > 1 ) {
-				for ( var i=0; i<len; i++ )	if ( __INPUTCANDY.actions[i].name == name and __INPUTCANDY.actions[i].group == argument1 ) return i;
+				for ( var i=0; i<len; i++ )	if ( __INPUTCANDY.actions[i].name == name and __INPUTCANDY.actions[i].group == argument[1] ) return i;
 			} else {
 				for ( var i=0; i<len; i++ ) if ( __INPUTCANDY.actions[i].name == name ) return i;
 			}
@@ -1043,7 +1045,7 @@ function New_InputCandy() {
 			var player_index=__IC.GetPlayerIndex(player_number);
 			var binding=unknown;
 			if ( action.forbid_rebinding ) binding=none;
-			else if ( argument_count > 2 ) binding=argument2;
+			else if ( argument_count > 2 ) binding=argument[2];
 			if ( action.is_directional ) {
 				// The binding just permits choosing a different source for this data.
 				return __ICI.MatchDirectional(player_index,action_index,action);
@@ -2125,13 +2127,11 @@ function New_InputCandy_Private() {
 	MatchAction: function ( player_number, action, type ) {
 		switch ( type ) { // type not binding
 			case ICDeviceType_gamepad:
-			 if ( is_array(action.gamepad) ) {
-				 return __ICI.MatchButtonList( player_number, action, action.gamepad_combo, action.gamepad );
-			 } else {
-				 if ( action.gamepad != IC_none ) return __ICI.MatchSignal( player_number, action, action.gamepad );
-				 return false;
-			 }
-			break;
+      return is_array(action.gamepad)
+        ? __ICI.MatchButtonList( player_number, action, action.gamepad_combo, action.gamepad )
+        : (action.gamepad != IC_none
+          ? __ICI.MatchSignal( player_number, action, action.gamepad )
+          : false)
 			case ICDeviceType_keyboard:
 			 if ( is_array(action.keyboard) ) {
 				 return __ICI.MatchButtonList( player_number, action, action.keyboard_combo, action.keyboard );

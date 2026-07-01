@@ -1,5 +1,7 @@
 ///@package com.la-game-studio.input-candy.util
 ///@description Fork of https://github.com/LAGameStudio/InputCandy/commit/0d1b0c82fdbcc5367384916edba5daa3f8dc3fd8
+show_debug_message("init SDLDB.gml")
+
 
 #macro __SDLDB_PROCESS_SPLIT_BATCH_SIZE room_speed
 #macro __SDLDB_PROCESS_LINES_BATCH_SIZE room_speed
@@ -84,7 +86,6 @@ function __SDLDB_Load_Step() {
 	}
     __INPUTCANDY.SDLDB_Read_Bytes+=i;	
 	return false;
-	file_text_size() 
 	
 }
 
